@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>塔スコア計算機 詳細計算 - ぷよクエ</title>
+  <script src="https://unpkg.com/vue"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles/tower-score.css">
+</head>
+<body>
+  <div id="app" class="container">
+    <div class="header">
+      <img src="images/steam_tower_title.png" class="img-fluid" alt="塔スコア計算機">
+      <div class="navigation">
+        <a href="calc.html" class="btn btn-secondary btn-lg disabled" role="button">詳細計算</a>
+        <a href="matrix.html" class="btn btn-primary btn-lg active" role="button">一括計算</a>
+      </div>
+    </div>
+    <div class="score-card">
+      <p id="total-score"><span>{{ totalScore | toLocalString }}</span></p>
+      <div id="score-board">
+        <table>
+          <tr class="score-row">
+            <th>クリアターン</th>
+            <td class="data">
+              <div class="input-group input-group-sm">
+                <input class="form-control" v-model="clearTurn" type="number">
+                <input class="form-control-range" v-model="clearTurn" type="range" min="1" max="70" tabindex="-1">
+              </div>
+            </td>
+            <td class="score"><span>{{ clearTurnScore | toLocalString }}</span></td>
+          </tr>
+          <tr class="score-row">
+            <th>最高ダメージ</th>
+            <td class="data">
+              <div class="input-group input-group-sm">
+                <input class="form-control" v-model="maxDamage" type="number" step="10000000">
+                <input class="form-control-range" v-model="maxDamage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
+              </div>
+            </td>
+            <td class="score"><span>{{ maxDamageScore | toLocalString }}</span></td>
+          </tr>
+          <tr class="score-row">
+            <th>最大れんさ</th>
+            <td class="data">
+              <div class="input-group input-group-sm">
+                <input class="form-control" v-model="maxChain" type="number">
+                <input class="form-control-range" v-model="maxChain" type="range" min="1" max="16" tabindex="-1">
+              </div>
+            </td>
+            <td class="score"><span>{{ maxChainScore | toLocalString }}</span></td>
+          </tr>
+          <tr class="score-row score-row-last">
+            <th>フロアボーナス</th>
+            <td class="data">
+              <div class="input-group input-group-sm">
+                <select v-model="floorBonus" class="form-control">
+                  <option value="400">蒸気と暗闇の塔 1F-10F (400%)</option>
+                  <option value="160">とことんの塔 41F-50F (160%)</option>
+                  <option value="120">とことんの塔 31F-40F (120%)</option>
+                  <option value="80">とことんの塔 21F-30F (80%)</option>
+                  <option value="40">とことんの塔 11F-20F (40%)</option>
+                  <option value="0">とことんの塔 1F-10F (0%)</option>
+                </select>
+              </div>
+            </td>
+            <td class="score"><span>{{ floorBonusScore | toLocalString }}</span></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    Vue.filter('toLocalString', function(v) {
+	    return v.toLocaleString();
+    });
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        clearTurn: 9,
+        maxDamage: 100000000,
+        maxChain: 7,
+        floorBonus: 400,
+      },
+      mounted() {
+        if (localStorage.calc_clearTurn) this.clearTurn = localStorage.calc_clearTurn;
+        if (localStorage.calc_maxDamage) this.maxDamage = localStorage.calc_maxDamage;
+        if (localStorage.calc_maxChain) this.maxChain = localStorage.calc_maxChain;
+        if (localStorage.calc_floorBonus) this.floorBonus = localStorage.calc_floorBonus;
+      },
+      watch: {
+        clearTurn(v) { localStorage.calc_clearTurn = v; },
+        maxDamage(v) { localStorage.calc_maxDamage = v; },
+        maxChain(v) { localStorage.calc_maxChain = v; },
+        floorBonus(v) { localStorage.calc_floorBonus = v; },
+      },
+      computed: {
+        totalScore: function () {
+          return this.calcTotalScore();
+        },
+        clearTurnScore: function () {
+          return this.calcClearTurnScore(this.clearTurn);
+        },
+        maxDamageScore: function () {
+          return this.calcMaxDamageScore(this.maxDamage);
+        },
+        maxChainScore: function () {
+          return this.calcMaxChainScore(this.maxChain);
+        },
+        floorBonusScore: function () {
+          return this.calcFloorBonusScore(this.floorBonus);
+        },
+      },
+      methods: {
+        calcClearTurnScore: function(x) {
+          x = this._normalize(x, 0);
+          let y = 4300 - (60 * x);
+          return this._normalize(y, 100); // 70ターン以上でスコア100が最小
+        },
+        calcMaxDamageScore: function(x) {
+          x = this._normalize(x, 0);
+          // 計算式はみんなのスコアを1ページ分とって回帰分析して算出 (クリアターンも同じ)
+          // https://keisan.casio.jp/exec/system/1402032384
+          let y = Math.round(282.25228 * Math.log(x) - 648.872);
+          return this._normalize(y, 100, 5000); // 約5億ダメでスコア5000が最大らしい
+        },
+        calcMaxChainScore: function(x) {
+          x = this._normalize(x, 0);
+          let y = 300 * x;
+          return this._normalize(y, 300, 4800); // 16連鎖でスコア4800が最大らしい
+        },
+        calcFloorBonusScore: function(x) {
+          x = this._normalize(x, 0);
+          return Math.round(this.calcBaseScore() * x / 100);
+        },
+        calcTotalScore: function(x) {
+          return this.calcBaseScore() + this.floorBonusScore;
+        },
+        calcBaseScore: function() {
+          return this.clearTurnScore + this.maxDamageScore + this.maxChainScore;
+        },
+        _normalize: function(x, min, max) {
+          if (min && x < min) {
+            x = min;
+          }
+          if (max && max < x) {
+            x = max;
+          }
+          return x;
+        },
+      }
+    })
+  </script>
+</body>
+</html>

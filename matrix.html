@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>塔スコア計算機 一括計算 - ぷよクエ</title>
+  <script src="https://unpkg.com/vue"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles/tower-score.css">
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <div class="header">
+        <img src="images/steam_tower_title.png" class="img-fluid" alt="塔スコア計算機">
+        <div class="navigation">
+          <a href="calc.html" class="btn btn-primary btn-lg active" role="button">詳細計算</a>
+          <a href="matrix.html" class="btn btn-secondary btn-lg disabled" role="button">一括計算</a>
+        </div>
+      </div>
+      <div class="score-card">
+        <div id="score-board">
+          <div class="input-group input-group-sm">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="basic-addon1">最高ダメージ</span>
+            </div>
+            <input class="form-control" v-model="maxDamage" type="number" step="10000000">
+            <input class="form-control-range" v-model="maxDamage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="score-matrix" class="score-card">
+      <table>
+        <tr>
+          <th rowspan="2" class="y-header">クリア<br>ターン</th>
+          <th colspan="15" class="x-header">最大れんさ</th>
+        </tr>
+        <tr>
+          <th v-for="x in xHeader" class="x-header">{{ x }}</th>
+        </tr>
+        <tr v-for="(ary, index) in gridData">
+          <th class="y-header">{{ yHeader[index] }}</th>
+          <td v-for="v in ary">
+            <span v-bind:class="{ active: v.isActive }">
+              {{ v.value | toLocalString }}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    Vue.filter('toLocalString', function(v) {
+	    return v.toLocaleString();
+    });
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        maxDamage: 100000000,
+        floorBonus: 400,
+        chainRange: [5, 17],
+        turnRange: [7, 63],
+      },
+      mounted() {
+        if (localStorage.matrix_maxDamage) {
+          this.maxDamage = localStorage.matrix_maxDamage;
+        }
+      },
+      watch: {
+        maxDamage(v) {
+          localStorage.matrix_maxDamage = v;
+        }
+      },
+      computed: {
+        xHeader: function () {
+          let r = [];
+          for (let x = this.chainRange[0]; x < this.chainRange[1]; x++) {
+            r.push(x);
+          }
+          return r;
+        },
+        yHeader: function () {
+          let r = [];
+          for (let y = this.turnRange[0]; y < this.turnRange[1]; y++) {
+            r.push(y);
+          }
+          return r;
+        },
+        gridData: function () {
+          let r = [];
+          for (let y = this.turnRange[0]; y < this.turnRange[1]; y++) {
+            let rr = []
+            for (let x = this.chainRange[0]; x < this.chainRange[1]; x++) {
+              let v = this.calcTotalScore(this.maxDamage, x, y);
+              rr.push({
+                value: v,
+                isActive: v > 52000,
+              });
+            }
+            r.push(rr);
+          }
+          return r;
+        },
+        totalScore: function () {
+          return this.calcTotalScore();
+        },
+        clearTurnScore: function () {
+          return this.calcClearTurnScore(this.clearTurn);
+        },
+        maxDamageScore: function () {
+          return this.calcMaxDamageScore(this.maxDamage);
+        },
+        maxChainScore: function () {
+          return this.calcMaxChainScore(this.maxChain);
+        },
+        floorBonusScore: function () {
+          return this.calcFloorBonusScore(this.floorBonus);
+        },
+      },
+      methods: {
+        calcClearTurnScore: function(x) {
+          x = this._normalize(x, 0);
+          let y = 4300 - (60 * x);
+          return this._normalize(y, 100); // 70ターン以上でスコア100が最小
+        },
+        calcMaxDamageScore: function(x) {
+          x = this._normalize(x, 0);
+          // 計算式はみんなのスコアを1ページ分とって回帰分析して算出 (クリアターンも同じ)
+          // https://keisan.casio.jp/exec/system/1402032384
+          let y = Math.round(282.25228 * Math.log(x) - 648.872);
+          return this._normalize(y, 100, 5000); // 約5億ダメでスコア5000が最大らしい
+        },
+        calcMaxChainScore: function(x) {
+          x = this._normalize(x, 0);
+          let y = 300 * x;
+          return this._normalize(y, 300, 4800); // 16連鎖でスコア4800が最大らしい
+        },
+        calcFloorBonusScore: function(x, damage, chain, turn) {
+          x = this._normalize(x, 0);
+          return Math.round(this.calcBaseScore(damage, chain, turn) * x / 100);
+        },
+        calcTotalScore: function(damage, chain, turn) {
+          return this.calcBaseScore(damage, chain, turn) + this.calcFloorBonusScore(this.floorBonus, damage, chain, turn);
+        },
+        calcBaseScore: function(damage, chain, turn) {
+          return this.calcMaxDamageScore(damage) + this.calcClearTurnScore(turn) + this.calcMaxChainScore(chain);
+        },
+        _normalize: function(x, min, max) {
+          if (min && x < min) {
+            x = min;
+          }
+          if (max && max < x) {
+            x = max;
+          }
+          return x;
+        },
+      }
+    })
+  </script>
+</body>
+</html>
