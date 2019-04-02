@@ -40,7 +40,7 @@ var scoreCalcMixin = {
         },
         calcBonusScore: function(base, bonus) {
             bonus = this._normalize(bonus, 0);
-            return Math.round(base * bonus / 100);
+            return Math.ceil(base * bonus / 100);
         },
         isSteamTower: function(bonus) {
             return 400 <= bonus; // dirty hack: 400%以上なら蒸気と暗闇の塔と判断
