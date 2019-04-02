@@ -5,6 +5,8 @@
   <meta name="description" content="ぷよクエの蒸気と暗闇の塔およびとことんの塔のスコアを計算するツールです。">
   <meta name="keywords" content="ぷよクエ,ぷよぷよ!!クエスト,ツール,蒸気と暗闇の塔,とことんの塔,スコア,計算">
   <script src="https://unpkg.com/vue"></script>
+  <script src="./mixins/score-calc.js"></script>
+  <script src="./filters/global-filter.js"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link rel="stylesheet" href="styles/tower-score.css">
 </head>
@@ -25,8 +27,8 @@
             <th>クリアターン</th>
             <td class="data">
               <div class="input-group input-group-sm">
-                <input class="form-control" v-model="clearTurn" type="number">
-                <input class="form-control-range" v-model="clearTurn" type="range" min="1" max="70" tabindex="-1">
+                <input class="form-control" v-model="inputs.turn" type="number">
+                <input class="form-control-range" v-model="inputs.turn" type="range" min="1" max="70" tabindex="-1">
               </div>
             </td>
             <td class="score"><span>{{ clearTurnScore | toLocalString }}</span></td>
@@ -35,8 +37,8 @@
             <th>最高ダメージ</th>
             <td class="data">
               <div class="input-group input-group-sm">
-                <input class="form-control" v-model="maxDamage" type="number" step="10000000">
-                <input class="form-control-range" v-model="maxDamage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
+                <input class="form-control" v-model="inputs.damage" type="number" step="10000000">
+                <input class="form-control-range" v-model="inputs.damage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
               </div>
             </td>
             <td class="score"><span>{{ maxDamageScore | toLocalString }}</span></td>
@@ -45,8 +47,8 @@
             <th>最大れんさ</th>
             <td class="data">
               <div class="input-group input-group-sm">
-                <input class="form-control" v-model="maxChain" type="number">
-                <input class="form-control-range" v-model="maxChain" type="range" min="1" max="16" tabindex="-1">
+                <input class="form-control" v-model="inputs.chain" type="number">
+                <input class="form-control-range" v-model="inputs.chain" type="range" min="1" max="16" tabindex="-1">
               </div>
             </td>
             <td class="score"><span>{{ maxChainScore | toLocalString }}</span></td>
@@ -55,7 +57,7 @@
             <th>フロアボーナス</th>
             <td class="data">
               <div class="input-group input-group-sm">
-                <select v-model="floorBonus" class="form-control">
+                <select v-model="inputs.bonus" class="form-control">
                   <option value="400">蒸気と暗闇の塔 1F-10F (400%)</option>
                   <option value="160">とことんの塔 41F-50F (160%)</option>
                   <option value="120">とことんの塔 31F-40F (120%)</option>
@@ -73,85 +75,52 @@
   </div>
 
   <script>
-    Vue.filter('toLocalString', function(v) {
-	    return v.toLocaleString();
-    });
-
     var app = new Vue({
       el: '#app',
+      mixins: [scoreCalcMixin],
       data: {
-        clearTurn: 9,
-        maxDamage: 100000000,
-        maxChain: 7,
-        floorBonus: 400,
+        version: 1,
+        inputs: {
+          turn: 9,
+          damage: 100000000,
+          chain: 7,
+          bonus: 400,
+        },
       },
       mounted() {
-        if (localStorage.calc_clearTurn) this.clearTurn = localStorage.calc_clearTurn;
-        if (localStorage.calc_maxDamage) this.maxDamage = localStorage.calc_maxDamage;
-        if (localStorage.calc_maxChain) this.maxChain = localStorage.calc_maxChain;
-        if (localStorage.calc_floorBonus) this.floorBonus = localStorage.calc_floorBonus;
+        let savedData = JSON.parse(localStorage.calc_data);
+        if (savedData && savedData.version == this.version) {
+          // TODO: validation
+          this.inputs = savedData.inputs;
+        }
       },
       watch: {
-        clearTurn(v) { localStorage.calc_clearTurn = v; },
-        maxDamage(v) { localStorage.calc_maxDamage = v; },
-        maxChain(v) { localStorage.calc_maxChain = v; },
-        floorBonus(v) { localStorage.calc_floorBonus = v; },
+        inputs: {
+          handler(v) {
+            // TODO lazy save
+            localStorage.calc_data = JSON.stringify(this.$data);
+          },
+          deep: true,
+        }
       },
       computed: {
         totalScore: function () {
-          return this.calcTotalScore();
+          return this.calcTotalScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.bonus);
         },
         clearTurnScore: function () {
-          return this.calcClearTurnScore(this.clearTurn);
+          return this.calcTurnScore(this.inputs.turn);
         },
         maxDamageScore: function () {
-          return this.calcMaxDamageScore(this.maxDamage);
+          return this.calcDamageScore(this.inputs.damage);
         },
         maxChainScore: function () {
-          return this.calcMaxChainScore(this.maxChain);
+          return this.calcChainScore(this.inputs.chain);
         },
         floorBonusScore: function () {
-          return this.calcFloorBonusScore(this.floorBonus);
+          let base = this.calcBaseScore(this.inputs.turn, this.inputs.damage, this.inputs.chain);
+          return this.calcBonusScore(base, this.inputs.bonus);
         },
       },
-      methods: {
-        calcClearTurnScore: function(x) {
-          x = this._normalize(x, 0);
-          let y = 4300 - (60 * x);
-          return this._normalize(y, 100); // 70ターン以上でスコア100が最小
-        },
-        calcMaxDamageScore: function(x) {
-          x = this._normalize(x, 0);
-          // 計算式はみんなのスコアを1ページ分とって回帰分析して算出 (クリアターンも同じ)
-          // https://keisan.casio.jp/exec/system/1402032384
-          let y = Math.round(282.25228 * Math.log(x) - 648.872);
-          return this._normalize(y, 100, 5000); // 約5億ダメでスコア5000が最大らしい
-        },
-        calcMaxChainScore: function(x) {
-          x = this._normalize(x, 0);
-          let y = 300 * x;
-          return this._normalize(y, 300, 4800); // 16連鎖でスコア4800が最大らしい
-        },
-        calcFloorBonusScore: function(x) {
-          x = this._normalize(x, 0);
-          return Math.round(this.calcBaseScore() * x / 100);
-        },
-        calcTotalScore: function(x) {
-          return this.calcBaseScore() + this.floorBonusScore;
-        },
-        calcBaseScore: function() {
-          return this.clearTurnScore + this.maxDamageScore + this.maxChainScore;
-        },
-        _normalize: function(x, min, max) {
-          if (min && x < min) {
-            x = min;
-          }
-          if (max && max < x) {
-            x = max;
-          }
-          return x;
-        },
-      }
     })
   </script>
   <!-- Global site tag (gtag.js) - Google Analytics -->

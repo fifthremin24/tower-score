@@ -5,6 +5,8 @@
   <meta name="description" content="ぷよクエの蒸気と暗闇の塔およびとことんの塔のスコアを計算するツールです。">
   <meta name="keywords" content="ぷよクエ,ぷよぷよ!!クエスト,ツール,蒸気と暗闇の塔,とことんの塔,スコア,計算">
   <script src="https://unpkg.com/vue"></script>
+  <script src="./mixins/score-calc.js"></script>
+  <script src="./filters/global-filter.js"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link rel="stylesheet" href="styles/tower-score.css">
 </head>
@@ -24,8 +26,8 @@
             <div class="input-group-prepend">
               <span class="input-group-text" id="basic-addon1">最高ダメージ</span>
             </div>
-            <input class="form-control" v-model="maxDamage" type="number" step="10000000">
-            <input class="form-control-range" v-model="maxDamage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
+            <input class="form-control" v-model="inputs.damage" type="number" step="10000000">
+            <input class="form-control-range" v-model="inputs.damage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
           </div>
         </div>
       </div>
@@ -52,26 +54,32 @@
   </div>
 
   <script>
-    Vue.filter('toLocalString', function(v) {
-	    return v.toLocaleString();
-    });
-
     var app = new Vue({
       el: '#app',
+      mixins: [scoreCalcMixin],
       data: {
-        maxDamage: 100000000,
+        version: 1,
+        inputs: {
+          damage: 100000000,
+        },
         floorBonus: 400,
         chainRange: [5, 17],
         turnRange: [7, 63],
       },
       mounted() {
-        if (localStorage.matrix_maxDamage) {
-          this.maxDamage = localStorage.matrix_maxDamage;
+        let savedData = JSON.parse(localStorage.matrix_data);
+        if (savedData && savedData.version == this.version) {
+          // TODO: validation
+          this.inputs = savedData.inputs;
         }
       },
       watch: {
-        maxDamage(v) {
-          localStorage.matrix_maxDamage = v;
+        inputs: {
+          handler(v) {
+            // TODO lazy save
+            localStorage.matrix_data = JSON.stringify(this.$data);
+          },
+          deep: true,
         }
       },
       computed: {
@@ -94,7 +102,7 @@
           for (let y = this.turnRange[0]; y < this.turnRange[1]; y++) {
             let rr = []
             for (let x = this.chainRange[0]; x < this.chainRange[1]; x++) {
-              let v = this.calcTotalScore(this.maxDamage, x, y);
+              let v = this.calcTotalScore(y, this.inputs.damage, x, 400);
               rr.push({
                 value: v,
                 isActive: v > 52000,
@@ -104,60 +112,7 @@
           }
           return r;
         },
-        totalScore: function () {
-          return this.calcTotalScore();
-        },
-        clearTurnScore: function () {
-          return this.calcClearTurnScore(this.clearTurn);
-        },
-        maxDamageScore: function () {
-          return this.calcMaxDamageScore(this.maxDamage);
-        },
-        maxChainScore: function () {
-          return this.calcMaxChainScore(this.maxChain);
-        },
-        floorBonusScore: function () {
-          return this.calcFloorBonusScore(this.floorBonus);
-        },
       },
-      methods: {
-        calcClearTurnScore: function(x) {
-          x = this._normalize(x, 0);
-          let y = 4300 - (60 * x);
-          return this._normalize(y, 100); // 70ターン以上でスコア100が最小
-        },
-        calcMaxDamageScore: function(x) {
-          x = this._normalize(x, 0);
-          // 計算式はみんなのスコアを1ページ分とって回帰分析して算出 (クリアターンも同じ)
-          // https://keisan.casio.jp/exec/system/1402032384
-          let y = Math.round(282.25228 * Math.log(x) - 648.872);
-          return this._normalize(y, 100, 5000); // 約5億ダメでスコア5000が最大らしい
-        },
-        calcMaxChainScore: function(x) {
-          x = this._normalize(x, 0);
-          let y = 300 * x;
-          return this._normalize(y, 300, 4800); // 16連鎖でスコア4800が最大らしい
-        },
-        calcFloorBonusScore: function(x, damage, chain, turn) {
-          x = this._normalize(x, 0);
-          return Math.round(this.calcBaseScore(damage, chain, turn) * x / 100);
-        },
-        calcTotalScore: function(damage, chain, turn) {
-          return this.calcBaseScore(damage, chain, turn) + this.calcFloorBonusScore(this.floorBonus, damage, chain, turn);
-        },
-        calcBaseScore: function(damage, chain, turn) {
-          return this.calcMaxDamageScore(damage) + this.calcClearTurnScore(turn) + this.calcMaxChainScore(chain);
-        },
-        _normalize: function(x, min, max) {
-          if (min && x < min) {
-            x = min;
-          }
-          if (max && max < x) {
-            x = max;
-          }
-          return x;
-        },
-      }
     })
   </script>
   <!-- Global site tag (gtag.js) - Google Analytics -->
