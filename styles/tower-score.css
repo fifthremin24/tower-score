@@ -72,7 +72,7 @@ body {
 }
 #score-board .score {
   text-align: right;
-  min-width: 5em;
+  min-width: 7em;
 }
 #score-board .score span {
   font-family: fixed;
