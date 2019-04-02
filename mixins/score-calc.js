@@ -1,10 +1,10 @@
 var scoreCalcMixin = {
     data: {
         TURN_SCORE_BASE: {
-            ENDLESS_TOWER: 5200,
+            ENDLESS_TOWER: 4900,
             STEAM_TOWER: 4300,
         },
-        TURN_SCORE_MIN: 100, // 70ターン以上でスコア100が最小
+        TURN_SCORE_MIN: 100, // スコア100が最小
         TURN_SCORE_MAX: 4000, // スコア4000が最大
         DAMAGE_SCORE_MIN: 100,
         DAMAGE_SCORE_MAX: 5000, // 約5億ダメでスコア5000が最大らしい
