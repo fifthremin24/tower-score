@@ -108,7 +108,7 @@
           return this.calcTotalScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.bonus);
         },
         clearTurnScore: function () {
-          return this.calcTurnScore(this.inputs.turn);
+          return this.calcTurnScore(this.inputs.turn, this.inputs.bonus);
         },
         maxDamageScore: function () {
           return this.calcDamageScore(this.inputs.damage);
@@ -117,7 +117,7 @@
           return this.calcChainScore(this.inputs.chain);
         },
         floorBonusScore: function () {
-          let base = this.calcBaseScore(this.inputs.turn, this.inputs.damage, this.inputs.chain);
+          let base = this.calcBaseScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.bonus);
           return this.calcBonusScore(base, this.inputs.bonus);
         },
       },
