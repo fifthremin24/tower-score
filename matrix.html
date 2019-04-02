@@ -24,6 +24,42 @@
         <div id="score-board">
           <div class="input-group input-group-sm">
             <div class="input-group-prepend">
+              <span class="input-group-text" id="basic-addon1">フロアボーナス</span>
+            </div>
+            <select v-model="inputs.bonus" class="form-control">
+              <option value="400">蒸気と暗闇の塔 1F-10F (400%)</option>
+              <option value="160">とことんの塔 41F-50F (160%)</option>
+              <option value="120">とことんの塔 31F-40F (120%)</option>
+              <option value="80">とことんの塔 21F-30F (80%)</option>
+              <option value="40">とことんの塔 11F-20F (40%)</option>
+              <option value="0">とことんの塔 1F-10F (0%)</option>
+            </select>
+          </div>
+          <div class="input-group input-group-sm">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="basic-addon1">目標スコア</span>
+            </div>
+            <select v-model="inputs.target" class="form-control">
+              <option value="52000">蒸気と暗闇の塔 (52,000)</option>
+              <option value="34000">とことんの塔 (34,000)</option>
+              <option value="32000">とことんの塔 (32,000)</option>
+              <option value="30000">とことんの塔 (30,000)</option>
+              <option value="28000">とことんの塔 (28,000)</option>
+              <option value="26000">とことんの塔 (26,000)</option>
+              <option value="24000">とことんの塔 (24,000)</option>
+              <option value="22000">とことんの塔 (22,000)</option>
+              <option value="20000">とことんの塔 (20,000)</option>
+              <option value="18000">とことんの塔 (18,000)</option>
+              <option value="16000">とことんの塔 (16,000)</option>
+              <option value="14000">とことんの塔 (14,000)</option>
+              <option value="12000">とことんの塔 (12,000)</option>
+              <option value="10000">とことんの塔 (10,000)</option>
+              <option value="8000">とことんの塔 (8,000)</option>
+              <option value="6000">とことんの塔 (6,000)</option>
+            </select>
+          </div>
+          <div class="input-group input-group-sm">
+            <div class="input-group-prepend">
               <span class="input-group-text" id="basic-addon1">最高ダメージ</span>
             </div>
             <input class="form-control" v-model="inputs.damage" type="number" step="10000000">
@@ -102,10 +138,10 @@
           for (let y = this.turnRange[0]; y < this.turnRange[1]; y++) {
             let rr = []
             for (let x = this.chainRange[0]; x < this.chainRange[1]; x++) {
-              let v = this.calcTotalScore(y, this.inputs.damage, x, 400);
+              let v = this.calcTotalScore(y, this.inputs.damage, x, this.inputs.bonus);
               rr.push({
                 value: v,
-                isActive: v > 52000,
+                isActive: v > this.inputs.target,
               });
             }
             r.push(rr);

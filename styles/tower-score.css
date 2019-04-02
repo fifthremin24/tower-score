@@ -98,6 +98,10 @@ body {
   border-bottom: none;
 }
 
+#score-board .input-group-prepend span {
+  width: 10em;
+}
+
 #score-matrix {
   width: 90%;
   padding: 0;
