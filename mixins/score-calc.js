@@ -28,9 +28,29 @@ var scoreCalcMixin = {
         },
         calcDamageScore: function(damage) {
             // 計算式はみんなのスコアを1ページ分とって回帰分析して算出 (クリアターンも同じ)
-            // https://keisan.casio.jp/edamageec/system/1402032384
+            // https://keisan.casio.jp/exec/system/1402032384
+            //
+            // 以下の式が得られます。
+            //   y=A+Bln(x)
+            //   A=-650.793
+            //   B=282.3762
+            //
+            // 底の変換公式を利用してeを底とする自然対数から10を底とする常用対数に変換します。
+            //   ln(x) = log_e(x) = log_10(x) / log_10(e)
+            //
+            // 元の式に当てはめて計算します。
+            //   y = A+B(log_10(x) / log_10(e))
+            //     = -650.793 + 282.3762 * (log_10(x) / log_10(e))
+            //     = -650.793 + log_10(x) * (282.3762 / log_10(e))
+            //     = -650.793 + log_10(x) * 650.195
+            //     ≒ -650 + log_10(x) * 650
+            //     = (log_10(x) - 1) * 650
+            //
+            // 変換した式を計算すると650という似た数字が現れます。
+            // 650.793や、650.195の元となった数字の282.3762は回帰分析によって得られた近似式であり
+            // 誤差を含むので元の式は650で間違いないでしょう。
             damage = this._normalize(damage, 0);
-            let r = Math.round(282.25228 * Math.log(damage) - 648.872);
+            let r = Math.ceil(650 * (Math.log10(damage) - 1));
             return this._normalize(r, this.DAMAGE_SCORE_MIN, this.DAMAGE_SCORE_MAX);
         },
         calcChainScore: function(chain) {
