@@ -57,13 +57,14 @@
             <th>フロアボーナス</th>
             <td class="data">
               <div class="input-group input-group-sm">
-                <select v-model="inputs.bonus" class="form-control">
-                  <option value="400">蒸気と暗闇の塔 1F-10F (400%)</option>
-                  <option value="160">とことんの塔 41F-50F (160%)</option>
-                  <option value="120">とことんの塔 31F-40F (120%)</option>
-                  <option value="80">とことんの塔 21F-30F (80%)</option>
-                  <option value="40">とことんの塔 11F-20F (40%)</option>
-                  <option value="0">とことんの塔 1F-10F (0%)</option>
+                <select v-model="inputs.floor" class="form-control">
+                  <option value="steam2">蒸気と暗闇の塔 11F-20F (400%)</option>
+                  <option value="steam1">蒸気と暗闇の塔 1F-10F (400%)</option>
+                  <option value="endless5">とことんの塔 41F-50F (160%)</option>
+                  <option value="endless4">とことんの塔 31F-40F (120%)</option>
+                  <option value="endless3">とことんの塔 21F-30F (80%)</option>
+                  <option value="endless2">とことんの塔 11F-20F (40%)</option>
+                  <option value="endless1">とことんの塔 1F-10F (0%)</option>
                 </select>
               </div>
             </td>
@@ -79,12 +80,12 @@
       el: '#app',
       mixins: [scoreCalcMixin],
       data: {
-        version: 1,
+        version: 2,
         inputs: {
           turn: 9,
           damage: 100000000,
           chain: 7,
-          bonus: 400,
+          floor: "steam2",
         },
       },
       mounted() {
@@ -105,10 +106,10 @@
       },
       computed: {
         totalScore: function () {
-          return this.calcTotalScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.bonus);
+          return this.calcTotalScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.floor);
         },
         clearTurnScore: function () {
-          return this.calcTurnScore(this.inputs.turn, this.inputs.bonus);
+          return this.calcTurnScore(this.inputs.turn, this.inputs.floor);
         },
         maxDamageScore: function () {
           return this.calcDamageScore(this.inputs.damage);
@@ -117,8 +118,8 @@
           return this.calcChainScore(this.inputs.chain);
         },
         floorBonusScore: function () {
-          let base = this.calcBaseScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.bonus);
-          return this.calcBonusScore(base, this.inputs.bonus);
+          let base = this.calcBaseScore(this.inputs.turn, this.inputs.damage, this.inputs.chain, this.inputs.floor);
+          return this.calcBonusScore(base, this.inputs.floor);
         },
       },
     })

@@ -1,8 +1,17 @@
 var scoreCalcMixin = {
     data: {
-        TURN_SCORE_BASE: {
-            ENDLESS_TOWER: 4900,
-            STEAM_TOWER: 4300,
+        // フロアごとのフロアボーナスとターンスコアの開始値
+        FLOOR_SETTING: {
+            // 蒸気と暗闇の塔 11-20F
+            steam2: { bonus: 400, turn_score_base: 4600 },
+            // 蒸気と暗闇の塔  1-10F
+            steam1: { bonus: 400, turn_score_base: 4300 },
+            // とことんの塔
+            endless5: { bonus: 160, turn_score_base: 4900 },
+            endless4: { bonus: 120, turn_score_base: 4900 },
+            endless3: { bonus: 80, turn_score_base: 4900 },
+            endless2: { bonus: 40, turn_score_base: 4900 },
+            endless1: { bonus: 0, turn_score_base: 4900 },
         },
         TURN_SCORE_MIN: 100, // スコア100が最小
         TURN_SCORE_MAX: 4000, // スコア4000が最大
@@ -12,17 +21,17 @@ var scoreCalcMixin = {
         CHAIN_SCORE_MAX: 4800, // 16連鎖でスコア4800が最大らしい
     },
     methods: {
-        calcTotalScore: function(turn, damage, chain, bonus) {
-            let base = this.calcBaseScore(turn, damage, chain, bonus);
-            return base + this.calcBonusScore(base, bonus);
+        calcTotalScore: function(turn, damage, chain, floor) {
+            let base = this.calcBaseScore(turn, damage, chain, floor);
+            return base + this.calcBonusScore(base, floor);
         },
-        calcBaseScore: function(turn, damage, chain, bonus) {
-            return this.calcChainScore(chain) + this.calcDamageScore(damage) + this.calcTurnScore(turn, bonus);
+        calcBaseScore: function(turn, damage, chain, floor) {
+            return this.calcChainScore(chain) + this.calcDamageScore(damage) + this.calcTurnScore(turn, floor);
         },
-        calcTurnScore: function(turn, bonus) {
+        calcTurnScore: function(turn, floor) {
             turn = this._normalize(turn, 0);
             // とことんの塔と蒸気と暗闇の塔でターンスコアの開始値が違う
-            let base = this.isSteamTower(bonus) ? this.TURN_SCORE_BASE.STEAM_TOWER : this.TURN_SCORE_BASE.ENDLESS_TOWER;
+            let base = this.FLOOR_SETTING[floor].turn_score_base;
             let r = base - (60 * turn);
             return this._normalize(r, this.TURN_SCORE_MIN, this.TURN_SCORE_MAX);
         },
@@ -58,12 +67,9 @@ var scoreCalcMixin = {
             let r = 300 * chain;
             return this._normalize(r, this.CHAIN_SCORE_MIN, this.CHAIN_SCORE_MAX);
         },
-        calcBonusScore: function(base, bonus) {
-            bonus = this._normalize(bonus, 0);
+        calcBonusScore: function(base, floor) {
+            let bonus = this.FLOOR_SETTING[floor].bonus;
             return Math.ceil(base * bonus / 100);
-        },
-        isSteamTower: function(bonus) {
-            return 400 <= bonus; // dirty hack: 400%以上なら蒸気と暗闇の塔と判断
         },
         _normalize: function(x, min, max) {
             if (min && x < min) {

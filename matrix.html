@@ -26,13 +26,14 @@
             <div class="input-group-prepend">
               <span class="input-group-text" id="basic-addon1">フロアボーナス</span>
             </div>
-            <select v-model="inputs.bonus" class="form-control">
-              <option value="400">蒸気と暗闇の塔 1F-10F (400%)</option>
-              <option value="160">とことんの塔 41F-50F (160%)</option>
-              <option value="120">とことんの塔 31F-40F (120%)</option>
-              <option value="80">とことんの塔 21F-30F (80%)</option>
-              <option value="40">とことんの塔 11F-20F (40%)</option>
-              <option value="0">とことんの塔 1F-10F (0%)</option>
+            <select v-model="inputs.floor" class="form-control">
+              <option value="steam2">蒸気と暗闇の塔 11F-20F (400%)</option>
+              <option value="steam1">蒸気と暗闇の塔 1F-10F (400%)</option>
+              <option value="endless5">とことんの塔 41F-50F (160%)</option>
+              <option value="endless4">とことんの塔 31F-40F (120%)</option>
+              <option value="endless3">とことんの塔 21F-30F (80%)</option>
+              <option value="endless2">とことんの塔 11F-20F (40%)</option>
+              <option value="endless1">とことんの塔 1F-10F (0%)</option>
             </select>
           </div>
           <div class="input-group input-group-sm">
@@ -94,13 +95,12 @@
       el: '#app',
       mixins: [scoreCalcMixin],
       data: {
-        version: 1,
+        version: 2,
         inputs: {
           damage: 100000000,
-          bonus: 400,
+          floor: "steam2",
           target: 52000,
         },
-        floorBonus: 400,
         chainRange: [5, 17],
         turnRange: [7, 63],
       },
@@ -140,7 +140,7 @@
           for (let y = this.turnRange[0]; y < this.turnRange[1]; y++) {
             let rr = []
             for (let x = this.chainRange[0]; x < this.chainRange[1]; x++) {
-              let v = this.calcTotalScore(y, this.inputs.damage, x, this.inputs.bonus);
+              let v = this.calcTotalScore(y, this.inputs.damage, x, this.inputs.floor);
               rr.push({
                 value: v,
                 isActive: v > this.inputs.target,
