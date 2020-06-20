@@ -2,9 +2,11 @@ var scoreCalcMixin = {
     data: {
         // フロアごとのフロアボーナスとターンスコアの開始値
         FLOOR_SETTING: {
-            // 蒸気と暗闇の塔 11-20F
+            // 蒸気と暗闇の塔 ③
+            steam3: { bonus: 400, turn_score_base: 4300 },
+            // 蒸気と暗闇の塔 ②
             steam2: { bonus: 400, turn_score_base: 4600 },
-            // 蒸気と暗闇の塔  1-10F
+            // 蒸気と暗闇の塔 ①
             steam1: { bonus: 400, turn_score_base: 4300 },
             // とことんの塔
             endless5: { bonus: 160, turn_score_base: 4900 },

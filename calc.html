@@ -37,8 +37,8 @@
             <th>最高ダメージ</th>
             <td class="data">
               <div class="input-group input-group-sm">
-                <input class="form-control" v-model="inputs.damage" type="number" step="10000000">
-                <input class="form-control-range" v-model="inputs.damage" type="range" min="10000000" max="500000000" step="10000000" tabindex="-1">
+                <input class="form-control" v-model="inputs.damage" type="number" min="1000000" max="500000000" step="1000000">
+                <input class="form-control-range" v-model="inputs.damage" type="range" min="1000000" max="500000000" step="1000000" tabindex="-1">
               </div>
             </td>
             <td class="score"><span>{{ maxDamageScore | toLocalString }}</span></td>
@@ -58,8 +58,9 @@
             <td class="data">
               <div class="input-group input-group-sm">
                 <select v-model="inputs.floor" class="form-control">
-                  <option value="steam2">蒸気と暗闇の塔 11F-20F (400%)</option>
-                  <option value="steam1">蒸気と暗闇の塔 1F-10F (400%)</option>
+                  <option value="steam3">蒸気と暗闇の塔③ (400%)</option>
+                  <option value="steam2">蒸気と暗闇の塔② (400%)</option>
+                  <option value="steam1">蒸気と暗闇の塔① (400%)</option>
                   <option value="endless5">とことんの塔 41F-50F (160%)</option>
                   <option value="endless4">とことんの塔 31F-40F (120%)</option>
                   <option value="endless3">とことんの塔 21F-30F (80%)</option>
