@@ -17,7 +17,7 @@ var scoreCalcMixin = {
         },
         TURN_SCORE_MIN: 100, // スコア100が最小
         TURN_SCORE_MAX: 4000, // スコア4000が最大
-        DAMAGE_SCORE_MIN: 100,
+        DAMAGE_SCORE_MIN: 0, // 0ダメだとスコア0
         DAMAGE_SCORE_MAX: 5000, // 約5億ダメでスコア5000が最大らしい
         CHAIN_SCORE_MIN: 300,
         CHAIN_SCORE_MAX: 4800, // 16連鎖でスコア4800が最大らしい
@@ -61,6 +61,7 @@ var scoreCalcMixin = {
             // 650.793や、650.195の元となった数字の282.3762は回帰分析によって得られた近似式であり
             // 誤差を含むので元の式は650で間違いないでしょう。
             damage = this._normalize(damage, 0);
+            if (damage <= 0) return 0;
             let r = Math.ceil(650 * (Math.log10(damage) - 1));
             return this._normalize(r, this.DAMAGE_SCORE_MIN, this.DAMAGE_SCORE_MAX);
         },
