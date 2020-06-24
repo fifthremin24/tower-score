@@ -62,7 +62,9 @@ var scoreCalcMixin = {
             // 誤差を含むので元の式は650で間違いないでしょう。
             damage = this._normalize(damage, 0);
             if (damage <= 0) return 0;
-            let r = Math.ceil(650 * (Math.log10(damage) - 1));
+            let base = Math.log10(damage);
+            if (base <= 1) return 1;
+            let r = Math.ceil(650 * (base - 1));
             return this._normalize(r, this.DAMAGE_SCORE_MIN, this.DAMAGE_SCORE_MAX);
         },
         calcChainScore: function(chain) {
