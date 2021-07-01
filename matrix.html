@@ -146,7 +146,7 @@
               let v = this.calcTotalScore(y, this.inputs.damage, x, this.inputs.floor);
               rr.push({
                 value: v,
-                isActive: v > this.inputs.target,
+                isActive: v >= this.inputs.target,
               });
             }
             r.push(rr);
