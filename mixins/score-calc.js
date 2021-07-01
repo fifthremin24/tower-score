@@ -2,6 +2,8 @@ var scoreCalcMixin = {
     data: {
         // フロアごとのフロアボーナスとターンスコアの開始値
         FLOOR_SETTING: {
+            // 蒸気と暗闇の塔 ④
+            steam4: { bonus: 400, turn_score_base: 4300 },
             // 蒸気と暗闇の塔 ③
             steam3: { bonus: 400, turn_score_base: 4300 },
             // 蒸気と暗闇の塔 ②
