@@ -3,28 +3,38 @@ var scoreCalcMixin = {
         // フロアごとのフロアボーナスとターンスコアの開始値
         FLOOR_SETTING: {
             // 蒸気と暗闇の塔 ④
-            steam4: { bonus: 400, turn_score_base: 4300 },
+            steam4: { bonus: 400, turn_score_base: 5 },
             // 蒸気と暗闇の塔 ③
-            steam3: { bonus: 400, turn_score_base: 4300 },
+            steam3: { bonus: 400, turn_score_base: 5 },
             // 蒸気と暗闇の塔 ②
-            steam2: { bonus: 400, turn_score_base: 4600 },
+            steam2: { bonus: 400, turn_score_base: 10 },
             // 蒸気と暗闇の塔 ①
-            steam1: { bonus: 400, turn_score_base: 4300 },
-            // とことんの塔
-            endless5: { bonus: 160, turn_score_base: 4900 },
-            endless4: { bonus: 120, turn_score_base: 4900 },
-            endless3: { bonus: 80, turn_score_base: 4900 },
-            endless2: { bonus: 40, turn_score_base: 4900 },
-            endless1: { bonus: 0, turn_score_base: 4900 },
+            steam1: { bonus: 400, turn_score_base: 5 },
+            // とことんの塔 (n5とn10は20ターンでフルスコア、それ以外は15ターンでフルスコア)
+            endless5b: { bonus: 160, turn_score_base: 20 },
+            endless5n: { bonus: 160, turn_score_base: 15 },
+            endless4b: { bonus: 120, turn_score_base: 20 },
+            endless4n: { bonus: 120, turn_score_base: 15 },
+            endless3b: { bonus: 80, turn_score_base: 20 },
+            endless3n: { bonus: 80, turn_score_base: 15 },
+            endless2b: { bonus: 40, turn_score_base: 20 },
+            endless2n: { bonus: 40, turn_score_base: 15 },
+            endless1b: { bonus: 0, turn_score_base: 20 },
+            endless1n: { bonus: 0, turn_score_base: 15 },
         },
         TURN_SCORE_MIN: 100, // スコア100が最小
         TURN_SCORE_MAX: 4000, // スコア4000が最大
+        TURN_SCORE_DEDUCTION: 60, // 1ターン毎60点減点
         DAMAGE_SCORE_MIN: 0, // 0ダメだとスコア0
         DAMAGE_SCORE_MAX: 5000, // 約5億ダメでスコア5000が最大らしい
         CHAIN_SCORE_MIN: 300,
         CHAIN_SCORE_MAX: 4800, // 16連鎖でスコア4800が最大らしい
     },
     methods: {
+        turnScoreRange: function (floor) {
+            let base = this.FLOOR_SETTING[floor].turn_score_base;
+            return [base, Math.floor((this.TURN_SCORE_MAX / this.TURN_SCORE_DEDUCTION) + base)];
+        },
         calcTotalScore: function(turn, damage, chain, floor) {
             let base = this.calcBaseScore(turn, damage, chain, floor);
             return base + this.calcBonusScore(base, floor);
@@ -34,9 +44,11 @@ var scoreCalcMixin = {
         },
         calcTurnScore: function(turn, floor) {
             turn = this._normalize(turn, 0);
-            // とことんの塔と蒸気と暗闇の塔でターンスコアの開始値が違う
+            // とことんの塔と蒸気と暗闇の塔でターンスコアの減点開始のターンが違う
             let base = this.FLOOR_SETTING[floor].turn_score_base;
-            let r = base - (60 * turn);
+            if (turn <= base)
+                return this.TURN_SCORE_MAX;
+            let r = this.TURN_SCORE_MAX - ((turn - base) * this.TURN_SCORE_DEDUCTION);
             return this._normalize(r, this.TURN_SCORE_MIN, this.TURN_SCORE_MAX);
         },
         calcDamageScore: function(damage) {
